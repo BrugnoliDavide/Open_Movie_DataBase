@@ -1,8 +1,11 @@
 package com.example.openvideodatabase
 
+import com.example.openvideodatabase.WelcomeActivity
 import android.os.Bundle
+import android.content.Intent
 import androidx.compose.runtime.mutableStateOf
 import androidx.activity.ComponentActivity
+import android.app.Activity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Spacer
 import androidx.activity.enableEdgeToEdge
@@ -87,12 +90,20 @@ fun Login(name: String, modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                val message = if (username.isNotBlank()) {
-                    "benvenuto, $username"
+                if (username.isNotBlank()) {
+                    val intent = Intent(context, WelcomeActivity::class.java).apply {
+                        putExtra("username", username)
+                    }
+                    context.startActivity(intent)
+
+                    (context as? Activity)?.overridePendingTransition(
+                        android.R.anim.fade_in,
+                        android.R.anim.fade_out
+                    )
+
                 } else {
-                    "per favore, inserisci il tuo nome!"
+                    Toast.makeText(context, "Per favore, inserisci il tuo nome!", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
