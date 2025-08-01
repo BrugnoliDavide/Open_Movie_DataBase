@@ -3,6 +3,9 @@
     package="com.example.openvideodatabase">
     <!--xmlns:tools="http://schemas.android.com/tools" -->
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,8 +16,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenVideoDatabase">
 
-        <!--<uses-permission android:name="android.permission.INTERNET" />-->
-        <!--<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
 
 
         <activity
@@ -28,8 +29,17 @@
             />
 
         <activity
-            android:name=".SearchMenuActivity"
+            android:name=".ShowDettailActivity"
             android:exported="false"
+            />
+        
+        <activity
+            android:name=".WelcomeAndSearchActivity"
+            android:exported="true" /><!--provare successivamente ad impostare su false-->
+
+        <activity
+            android:name=".SearchMenuActivity"
+            android:exported="true"
             />
 
         <activity

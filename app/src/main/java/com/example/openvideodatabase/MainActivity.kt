@@ -1,7 +1,9 @@
+//main
 package com.example.openvideodatabase
 
-import com.example.openvideodatabase.WelcomeActivity
+//import com.example.openvideodatabase.WelcomeActivity
 import android.os.Bundle
+
 import android.content.Intent
 import androidx.compose.runtime.mutableStateOf
 import androidx.activity.ComponentActivity
@@ -38,9 +40,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
-            //tema app: ancora non toccato
-
             OpenVideoDatabaseTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Login(
@@ -91,10 +90,11 @@ fun Login(name: String, modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 if (username.isNotBlank()) {
-                    val intent = Intent(context, WelcomeActivity::class.java).apply {
+                    val intent = Intent(context, WelcomeAndSearchActivity::class.java).apply {
                         putExtra("username", username)
                     }
                     context.startActivity(intent)
+                    //(context as Activity).finish()
 
                     (context as? Activity)?.overridePendingTransition(
                         android.R.anim.fade_in,
