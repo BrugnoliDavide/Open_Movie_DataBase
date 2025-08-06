@@ -47,7 +47,7 @@ import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 
 class WelcomeAndSearchActivity : ComponentActivity() {
     private var omdbApi: ApiOmdb? = null
-    private val apiKey = "ad71433d"
+    private val apiKey = "e68682b3"
 
     companion object {
         private const val TAG = "WelcomeSearchActivity"

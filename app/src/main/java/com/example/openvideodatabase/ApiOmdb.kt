@@ -12,4 +12,12 @@ interface ApiOmdb {
         @Query("s") title: String,
         @Query("apikey") apiKey: String
     ): Call<OmdbSearchResponse>
+
+
+    @GET("/")
+    fun getMovieDetails(
+        @Query("i") imdbId: String,
+        @Query("apikey") apiKey: String
+    ): Call<OmdbMovieDetails>
+
 }
