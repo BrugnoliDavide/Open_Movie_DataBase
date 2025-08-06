@@ -22,19 +22,19 @@ graph TD;
 # 🎯 Kotlin Android OMDb Movie App - To Do List
 
 ## ✅ Stage 1: Setup e Architettura di Base
-- [ ] Inizializzare progetto Android Kotlin
-- [ ] Aggiungere dipendenze:
-  - [ ] Retrofit
-  - [ ] Gson/Moshi
+- ✅ Inizializzare progetto Android Kotlin
+- ✅ Aggiungere dipendenze:
+  - ✅ Retrofit
+  - ✅ Gson/Moshi
   - [ ] Room
   - [ ] Hilt/Dagger (per DI)
   - [ ] Navigation Component
 - [ ] Definire modelli dati per:
-  - [ ] `SearchResult` (output di `?s=`)
-  - [ ] `MovieDetail` (output di `?i=`)
-- [ ] Creare interfaccia Retrofit:
-  - [ ] `searchMoviesByTitle(title: String)`
-  - [ ] `getMovieDetails(imdbID: String)`
+  - ✅ `SearchResult` (output di `?s=`)
+  - ✅ `MovieDetail` (output di `?i=`)
+- ✅ Creare interfaccia Retrofit:
+  - ✅ `searchMoviesByTitle(title: String)`
+  - ✅ `getMovieDetails(imdbID: String)`
 - [ ] Abilitare Internet permission in `AndroidManifest.xml`
 
 ---
