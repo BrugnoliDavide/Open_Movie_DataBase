@@ -1,7 +1,9 @@
 plugins {
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlinKapt)
+    alias(libs.plugins.dagger.hilt.android)
 }
 
 android {
@@ -10,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.openvideodatabase"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -40,7 +42,26 @@ android {
     }
 }
 
+val roomVersion = "2.7.0"
+
 dependencies {
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
+
+    kapt("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.8.0")
+
+
+    kapt("com.google.dagger:hilt-android-compiler:2.57")
+    kapt("androidx.hilt:hilt-compiler:1.1.0")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation ("com.google.dagger:hilt-android:2.57")
+    kapt ("com.google.dagger:hilt-compiler:2.57")
+    implementation("javax.inject:javax.inject:1")
+    implementation(libs.androidx.core.ktx)
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -70,3 +91,5 @@ dependencies {
 
 
 }
+
+

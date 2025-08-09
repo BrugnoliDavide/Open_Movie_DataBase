@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Open Video database"
 include(":app")
- 

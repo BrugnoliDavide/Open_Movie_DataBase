@@ -61,7 +61,12 @@ class ShowDettailActivity : ComponentActivity() {
                 }
             }
         }
+
     }
+
+
+
+
 
     private fun setupRetrofit() {
         try {

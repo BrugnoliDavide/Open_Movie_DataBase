@@ -45,6 +45,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 
+
+
 class WelcomeAndSearchActivity : ComponentActivity() {
     private var omdbApi: ApiOmdb? = null
     private val apiKey = "e68682b3"
@@ -184,37 +186,56 @@ fun WelcomeSearchScreen(
             }
         }
     }
+    Box(modifier = Modifier.fillMaxSize()) {
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Indicatore di stato Retrofit in alto
-        StatusIndicator(retrofitStatus)
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Indicatore di stato Retrofit in alto
+            StatusIndicator(retrofitStatus)
 
-        if (showWelcome) {
-            WelcomeScreen(username)
-        } else {
-            SearchScreen(
-                searchTitle = searchTitle,
-                onSearchTitleChange = { searchTitle = it },
-                isSearching = isSearching,
-                onSearchClick = {
-                    if (searchTitle.isNotBlank()) {
-                        isSearching = true
-                        onSearchMovie(searchTitle) { imdbID ->
-                            isSearching = false
-                            if (imdbID != null) {
-                                val intent = Intent(context, ShowDettailActivity::class.java)
-                                intent.putExtra("imdbID", imdbID)
-                                context.startActivity(intent)
+            if (showWelcome) {
+                WelcomeScreen(username)
+            } else {
+                SearchScreen(
+                    searchTitle = searchTitle,
+                    onSearchTitleChange = { searchTitle = it },
+                    isSearching = isSearching,
+                    onSearchClick = {
+                        if (searchTitle.isNotBlank()) {
+                            isSearching = true
+                            onSearchMovie(searchTitle) { imdbID ->
+                                isSearching = false
+                                if (imdbID != null) {
+                                    val intent = Intent(context, ShowDettailActivity::class.java)
+                                    intent.putExtra("imdbID", imdbID)
+                                    context.startActivity(intent)
+                                }
                             }
+                        } else {
+                            Toast.makeText(context, "Inserisci un titolo", Toast.LENGTH_SHORT)
+                                .show()
                         }
-                    } else {
-                        Toast.makeText(context, "Inserisci un titolo", Toast.LENGTH_SHORT).show()
                     }
-                }
-            )
+                )
+            }
+        }
+        Button(
+            onClick = {
+                val intent = Intent(context, LikeFilmActivity::class.java)
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(width = 140.dp, height = 44.dp),
+        ) {
+            Text(text = "LIKE FILM")
         }
     }
 }
+
+
+
+
 
 @Composable
 fun StatusIndicator(retrofitStatus: Boolean) {

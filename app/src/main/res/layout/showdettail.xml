@@ -10,4 +10,17 @@
         android:textSize="18sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/button_insert"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Inserisci dati"
+        android:layout_margin="16dp"
+        android:layout_gravity="bottom"/>
+
+
 </LinearLayout>
+
+
+
