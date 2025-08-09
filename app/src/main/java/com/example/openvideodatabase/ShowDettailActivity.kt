@@ -1,40 +1,32 @@
 package com.example.openvideodatabase
 
 import android.os.Bundle
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Icon
+
+import android.content.Intent
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
+import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 
 class ShowDettailActivity : ComponentActivity() {
+
     private var omdbApi: ApiOmdb? = null
     private val apiKey = "e68682b3"
 
@@ -61,12 +53,7 @@ class ShowDettailActivity : ComponentActivity() {
                 }
             }
         }
-
     }
-
-
-
-
 
     private fun setupRetrofit() {
         try {
@@ -82,22 +69,25 @@ class ShowDettailActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun MovieDetailsScreen(
     imdbID: String,
     omdbApi: ApiOmdb?,
     apiKey: String
 ) {
-    var movieDetails: OmdbMovieDetails? by remember { mutableStateOf(null) }
+    var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    var errorMessage: String? by remember { mutableStateOf(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current  // CORRETTO: acquisire il contesto qui
 
     LaunchedEffect(imdbID) {
         if (omdbApi != null && imdbID.isNotEmpty()) {
             Log.d(
                 "MovieDetails",
                 "Chiamata API per ID: $imdbID con key: ${apiKey.take(3)}..."
-            ) // Log parziale della key
+            )
 
             try {
                 val call = omdbApi.getMovieDetails(imdbID, apiKey)
@@ -107,17 +97,11 @@ fun MovieDetailsScreen(
                         response: Response<OmdbMovieDetails>
                     ) {
                         isLoading = false
-                        Log.d("MovieDetails", "Risposta ricevuta: ${response.code()}")
-
                         if (response.isSuccessful) {
                             val details = response.body()
-                            Log.d(
-                                "MovieDetails",
-                                "Response: ${details?.Response}, Error: ${details?.Error}"
-                            )
-
                             if (details?.Response == "True") {
                                 movieDetails = details
+                                errorMessage = null
                             } else {
                                 errorMessage = details?.Error ?: "Film non trovato"
                                 Log.e("MovieDetails", "Errore API: $errorMessage")
@@ -154,90 +138,115 @@ fun MovieDetailsScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        when {
-            isLoading -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Caricamento dettagli film...")
+    // Manca import di Box, lo aggiungiamo
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            when {
+                isLoading -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Caricamento dettagli film...")
+                    }
                 }
-            }
 
-            errorMessage != null -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        text = "Errore: $errorMessage",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 16.sp
-                    )
+                errorMessage != null -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = "Errore: $errorMessage",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
-            }
 
-            movieDetails != null -> {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    MovieDetailsContent(movieDetails!!)
+                movieDetails != null -> {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState())
+                    ) {
+                        MovieDetailsContent(movieDetails!!)
+                    }
                 }
             }
         }
+
+        Button(
+            onClick = {
+                val intent = Intent(context, LikeFilmActivity::class.java)
+                movieDetails?.let {
+                    intent.putExtra("imdbID", it.imdbID)
+                    intent.putExtra("title", it.Title)
+                    intent.putExtra("year", it.Year)
+                }
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(100.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Favorite, // Cuore pieno
+                contentDescription = "Aggiungi ai preferiti",
+                tint = MaterialTheme.colorScheme.onPrimary // colore dell'icona
+            )
+        }
+
     }
 }
 
+@Composable
+fun MovieDetailsContent(details: OmdbMovieDetails) {
+    Column {
+        Text(
+            text = details.Title ?: "Titolo non disponibile",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-    @Composable
-    fun MovieDetailsContent(details: OmdbMovieDetails) {
-        Column {
+        DetailRow("Anno", details.Year)
+        DetailRow("Durata", details.Runtime)
+        DetailRow("Genere", details.Genre)
+        DetailRow("Regista", details.Director)
+        DetailRow("Attori", details.Actors)
+        DetailRow("Trama", details.Plot)
+        DetailRow("Valutazione IMDb", details.imdbRating)
+        DetailRow("Voti IMDb", details.imdbVotes)
+        DetailRow("Premi", details.Awards)
+        DetailRow("Paese", details.Country)
+        DetailRow("Lingua", details.Language)
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String?) {
+    if (!value.isNullOrBlank() && value != "N/A") {
+        Column(modifier = Modifier.padding(bottom = 12.dp)) {
             Text(
-                text = details.Title ?: "Titolo non disponibile",
-                fontSize = 24.sp,
+                text = label,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.primary
             )
-
-            DetailRow("Anno", details.Year)
-            DetailRow("Durata", details.Runtime)
-            DetailRow("Genere", details.Genre)
-            DetailRow("Regista", details.Director)
-            DetailRow("Attori", details.Actors)
-            DetailRow("Trama", details.Plot)
-            DetailRow("Valutazione IMDb", details.imdbRating)
-            DetailRow("Voti IMDb", details.imdbVotes)
-            DetailRow("Premi", details.Awards)
-            DetailRow("Paese", details.Country)
-            DetailRow("Lingua", details.Language)
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
-
-    @Composable
-    fun DetailRow(label: String, value: String?) {
-        if (!value.isNullOrBlank() && value != "N/A") {
-            Column(modifier = Modifier.padding(bottom = 12.dp)) {
-                Text(
-                    text = label,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = value,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
-    }
-
+}
