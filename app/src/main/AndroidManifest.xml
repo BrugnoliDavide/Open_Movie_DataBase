@@ -24,11 +24,6 @@
             android:label="@string/title_activity_login" />
 
         <activity
-            android:name=".WelcomeActivity"
-            android:exported="false"
-            />
-
-        <activity
             android:name=".ShowDettailActivity"
             android:exported="false"
             />
@@ -37,10 +32,7 @@
             android:name=".WelcomeAndSearchActivity"
             android:exported="true" /><!--provare successivamente ad impostare su false-->
 
-        <activity
-            android:name=".SearchMenuActivity"
-            android:exported="true"
-            />
+
 
         <activity
             android:name=".MainActivity"
