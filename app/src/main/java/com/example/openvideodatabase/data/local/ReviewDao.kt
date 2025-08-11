@@ -25,6 +25,8 @@ interface ReviewDao {
     @Query("SELECT * FROM REVIEWS")
     suspend fun getAllReviews(): List<Review>
 
+    @Query("SELECT COUNT(*) FROM reviews WHERE title = :title")
+    suspend fun countByTitle(title: String): Int
 
 
     // Imposta first_viewed soltanto se è null (prima visualizzazione)

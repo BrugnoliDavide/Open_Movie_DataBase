@@ -1,6 +1,5 @@
 package com.example.openvideodatabase
 
-// Android e Compose base
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -164,7 +163,7 @@ fun MovieDetailsScreen(
         }
     }
 
-    // Manca import di Box, lo aggiungiamo
+
     androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -211,6 +210,54 @@ fun MovieDetailsScreen(
         Button(
             onClick = {
                 movieDetails?.let { details ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val exists = reviewRepository.existsByTitle(details.Title ?: "")
+                        if (exists) {
+                            // Film già presente
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(
+                                    context,
+                                    "Film già aggiunto ai preferiti",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            val review = Review(
+                                externalId = details.imdbID ?: "ID sconosciuto",
+                                title = details.Title ?: "Titolo sconosciuto",
+                                rating = 0f
+                            )
+                            reviewRepository.insert(review)
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(
+                                    context,
+                                    "Film aggiunto ai preferiti",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(100.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "Aggiungi ai preferiti",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
+
+        /*bottone vecchio
+
+        Button(
+            onClick = {
+                movieDetails?.let { details ->
                     val review = Review(
                         title = details.Title ?: "Titolo sconosciuto",
                         rating = 0f // valore placeholder, da aggiornare se serve
@@ -239,7 +286,10 @@ fun MovieDetailsScreen(
 
     }
 }
+*/
 
+    }
+}
 @Composable
 fun MovieDetailsContent(details: OmdbMovieDetails) {
     Column {

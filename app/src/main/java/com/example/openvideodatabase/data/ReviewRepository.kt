@@ -16,6 +16,11 @@ class ReviewRepository @Inject constructor(
     fun getById(id: Long): Flow<Review?> = dao.getById(id)
 
     suspend fun insert(review: Review): Long = dao.insert(review)
+
+    suspend fun existsByTitle(title: String): Boolean {
+        return dao.countByTitle(title) > 0
+    }
+
     suspend fun update(review: Review) = dao.update(review)
     suspend fun delete(review: Review) = dao.delete(review)
 
