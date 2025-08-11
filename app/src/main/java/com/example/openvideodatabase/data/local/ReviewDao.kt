@@ -22,6 +22,11 @@ interface ReviewDao {
     @Delete
     suspend fun delete(review: Review)
 
+    @Query("SELECT * FROM REVIEWS")
+    suspend fun getAllReviews(): List<Review>
+
+
+
     // Imposta first_viewed soltanto se è null (prima visualizzazione)
     @Query("UPDATE reviews SET first_viewed = :firstViewed WHERE id = :id AND first_viewed IS NULL")
     suspend fun markFirstViewedIfNull(id: Long, firstViewed: Date)

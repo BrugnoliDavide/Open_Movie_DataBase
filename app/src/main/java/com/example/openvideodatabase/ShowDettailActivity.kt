@@ -1,18 +1,17 @@
 package com.example.openvideodatabase
 
+// Android e Compose base
 import android.os.Bundle
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Icon
-
-import android.content.Intent
 import android.util.Log
+import android.widget.Toast
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,14 +20,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import retrofit2.*
+
+// Retrofit
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
+// Coroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// DB locale
+import com.example.openvideodatabase.data.local.AppDatabase
+import com.example.openvideodatabase.data.local.Review
+import com.example.openvideodatabase.data.ReviewRepository
+
+
+// Tema
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
+
 
 class ShowDettailActivity : ComponentActivity() {
 
     private var omdbApi: ApiOmdb? = null
     private val apiKey = "e68682b3"
+    private lateinit var reviewRepository: ReviewRepository
+
 
     companion object {
         private const val TAG = "ShowDettailActivity"
@@ -37,8 +57,12 @@ class ShowDettailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val db = AppDatabase.getInstance(applicationContext)
+        reviewRepository = ReviewRepository(db.reviewDao())
+
         val imdbID = intent.getStringExtra("imdbID") ?: ""
         Log.d(TAG, "IMDb ID ricevuto: $imdbID")
+
 
         setupRetrofit()
 
@@ -48,7 +72,8 @@ class ShowDettailActivity : ComponentActivity() {
                     MovieDetailsScreen(
                         imdbID = imdbID,
                         omdbApi = omdbApi,
-                        apiKey = apiKey
+                        apiKey = apiKey,
+                        reviewRepository = reviewRepository
                     )
                 }
             }
@@ -74,7 +99,8 @@ class ShowDettailActivity : ComponentActivity() {
 fun MovieDetailsScreen(
     imdbID: String,
     omdbApi: ApiOmdb?,
-    apiKey: String
+    apiKey: String,
+    reviewRepository: ReviewRepository
 ) {
     var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -184,13 +210,19 @@ fun MovieDetailsScreen(
 
         Button(
             onClick = {
-                val intent = Intent(context, LikeFilmActivity::class.java)
-                movieDetails?.let {
-                    intent.putExtra("imdbID", it.imdbID)
-                    intent.putExtra("title", it.Title)
-                    intent.putExtra("year", it.Year)
+                movieDetails?.let { details ->
+                    val review = Review(
+                        title = details.Title ?: "Titolo sconosciuto",
+                        rating = 0f // valore placeholder, da aggiornare se serve
+                    )
+                    // Inserimento nel DB usando coroutine
+                    CoroutineScope(Dispatchers.IO).launch {
+                        reviewRepository.insert(review)
+                    }
+
+                    Toast.makeText(context, "Film aggiunto ai preferiti", Toast.LENGTH_SHORT).show()
                 }
-                context.startActivity(intent)
+                //context.startActivity(intent)
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)

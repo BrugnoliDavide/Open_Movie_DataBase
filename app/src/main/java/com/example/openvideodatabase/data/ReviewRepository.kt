@@ -21,4 +21,9 @@ class ReviewRepository @Inject constructor(
 
     // utility per registrare la prima visualizzazione
     suspend fun markFirstViewedIfNull(id: Long, time: Date) = dao.markFirstViewedIfNull(id, time)
+
+    suspend fun getAllReviews(): List<Review> {
+        return dao.getAllReviews()
+    }
+
 }

@@ -179,7 +179,7 @@ fun WelcomeSearchScreen(
     // Timer per passare dalla schermata welcome alla ricerca
     LaunchedEffect(showWelcome) {
         if (showWelcome) {
-            delay(3000)
+            delay(2000)
             // Controlla se siamo ancora nella schermata di benvenuto
             if (showWelcome) {
                 showWelcome = false
@@ -267,7 +267,7 @@ fun WelcomeScreen(username: String) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CircularProgressIndicator()
+            //CircularProgressIndicator()
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = "Caricamento...", fontSize = 16.sp)
         }
