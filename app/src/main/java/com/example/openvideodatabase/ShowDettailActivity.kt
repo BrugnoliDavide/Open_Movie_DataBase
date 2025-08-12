@@ -3,7 +3,11 @@ package com.example.openvideodatabase
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import android.content.Intent
+
+import androidx.compose.foundation.shape.CircleShape
+
+import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -13,33 +17,49 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Retrofit
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-// Coroutine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// DB locale
 import com.example.openvideodatabase.data.local.AppDatabase
 import com.example.openvideodatabase.data.local.Review
 import com.example.openvideodatabase.data.ReviewRepository
 
-
-// Tema
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+
+import androidx.compose.foundation.combinedClickable
+import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
+
+
+//per sfondo
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+//import com.google.accompanist.systemuicontroller.rememberSystemUiController
+
 
 
 class ShowDettailActivity : ComponentActivity() {
@@ -95,6 +115,7 @@ class ShowDettailActivity : ComponentActivity() {
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun MovieDetailsScreen(
     imdbID: String,
     omdbApi: ApiOmdb?,
@@ -102,10 +123,284 @@ fun MovieDetailsScreen(
     reviewRepository: ReviewRepository
 ) {
     var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
+    var lastReview by remember { mutableStateOf<Review?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
-    val context = LocalContext.current  // CORRETTO: acquisire il contesto qui
+    LaunchedEffect(imdbID) {
+        if (omdbApi != null && imdbID.isNotEmpty()) {
+            try {
+                val call = omdbApi.getMovieDetails(imdbID, apiKey)
+                call.enqueue(object : Callback<OmdbMovieDetails> {
+                    override fun onResponse(
+                        call: Call<OmdbMovieDetails>,
+                        response: Response<OmdbMovieDetails>
+                    ) {
+                        isLoading = false
+                        if (response.isSuccessful) {
+                            val details = response.body()
+                            if (details?.Response == "True") {
+                                movieDetails = details
+                                errorMessage = null
+                            } else {
+                                errorMessage = details?.Error ?: "Film non trovato"
+                            }
+                        } else {
+                            errorMessage = when (response.code()) {
+                                401 -> "Errore di autenticazione (API key non valida)"
+                                404 -> "Risorsa non trovata"
+                                else -> "Errore nella risposta: ${response.code()}"
+                            }
+                        }
+                    }
+
+                    override fun onFailure(call: Call<OmdbMovieDetails>, t: Throwable) {
+                        isLoading = false
+                        errorMessage = "Errore di rete: ${t.message}"
+                    }
+                })
+            } catch (e: Exception) {
+                isLoading = false
+                errorMessage = "Errore nella chiamata API: ${e.message}"
+            }
+        } else {
+            isLoading = false
+            errorMessage = when {
+                omdbApi == null -> "Errore di configurazione API"
+                imdbID.isEmpty() -> "ID film non valido"
+                else -> "Errore sconosciuto"
+            }
+        }
+    }
+
+    LaunchedEffect(movieDetails) {
+        movieDetails?.let { details ->
+            if (!details.Title.isNullOrBlank()) {
+                lastReview = reviewRepository.getLastReviewByTitle(details.Title)
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            isLoading -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Caricamento dettagli film...")
+                }
+            }
+
+            errorMessage != null -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "Errore: $errorMessage",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            movieDetails != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // Poster a pieno schermo in alto
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(500.dp)
+                    ) {
+                        AsyncImage(
+                            model = movieDetails?.Poster,
+                            contentDescription = "Poster Film",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        // Overlay scuro
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Black.copy(alpha = 0.4f))
+                        )
+
+                        // Sfumatura
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            MaterialTheme.colorScheme.background
+                                        ),
+                                        startY = 300f,
+                                        endY = Float.POSITIVE_INFINITY
+                                    )
+                                )
+                        )
+
+                        // Titolo e dettagli principali sopra l'immagine
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = movieDetails?.Title ?: "Titolo non disponibile",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${movieDetails?.Year ?: ""} • ${movieDetails?.Genre ?: ""}",
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+
+
+
+
+
+                        }
+                    }
+
+                    // Dettagli completi sotto
+                    Spacer(modifier = Modifier.height(16.dp))
+                    MovieDetailsContent(movieDetails!!)
+
+                    lastReview?.let { review ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Column(
+                            modifier = Modifier.padding(30.dp)
+                                .fillMaxWidth()
+                                .background(Color(0xFFFCA024), shape = RoundedCornerShape(24.dp))
+                                .combinedClickable(
+                                    onClick = { },
+                                    onLongClick = {
+                                        val intent = Intent(context, EditReviewActivity::class.java).apply {
+                                            putExtra("REVIEW_ID", review.id)
+                                        }
+                                        context.startActivity(intent)
+                                    }
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Valutazione: ${review.rating}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "Prima visualizzazione: ${review.firstViewed ?: "N/D"}",
+                                fontSize = 14.sp
+                            )
+                            if (!review.comment.isNullOrBlank()) {
+                                Text(
+                                    text = "Commento: ${review.comment}",
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        IconButton(
+            onClick = {
+                (context as? ComponentActivity)?.finish()
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Torna indietro",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        // Pulsante preferiti
+        Button(
+            onClick = {
+                movieDetails?.let { details ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val exists = reviewRepository.existsByTitle(details.Title ?: "")
+                        if (exists) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(
+                                    context,
+                                    "Film già aggiunto ai preferiti",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            val review = Review(
+                                externalId = details.imdbID ?: "ID sconosciuto",
+                                title = details.Title ?: "Titolo sconosciuto",
+                                rating = 0f
+                            )
+                            reviewRepository.insert(review)
+                            CoroutineScope(Dispatchers.Main).launch {
+                                Toast.makeText(
+                                    context,
+                                    "Film aggiunto ai preferiti",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .size(75.dp),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "Aggiungi ai preferiti",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
+
+
+/*fun MovieDetailsScreen(
+    imdbID: String,
+    omdbApi: ApiOmdb?,
+    apiKey: String,
+    reviewRepository: ReviewRepository
+) {
+    var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
+    var lastReview by remember { mutableStateOf<Review?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     LaunchedEffect(imdbID) {
         if (omdbApi != null && imdbID.isNotEmpty()) {
@@ -162,9 +457,17 @@ fun MovieDetailsScreen(
             Log.e("MovieDetails", errorMessage ?: "Errore sconosciuto")
         }
     }
+    LaunchedEffect(movieDetails) {
+        movieDetails?.let { details ->
+            if (!details.Title.isNullOrBlank()) {
+                lastReview = reviewRepository.getLastReviewByTitle(details.Title)
+            }
+        }
+
+    }
 
 
-    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -198,10 +501,104 @@ fun MovieDetailsScreen(
                 }
 
                 movieDetails != null -> {
+
+
+
+
                     Column(
                         modifier = Modifier.verticalScroll(rememberScrollState())
                     ) {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(500.dp) // altezza parte alta con il poster
+                        ) {
+                            AsyncImage(
+                                model = movieDetails?.Poster,
+                                contentDescription = "Poster Film",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            // Overlay scurente
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                            )
+
+                            // Sfumatura verso il colore di sfondo
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                MaterialTheme.colorScheme.background
+                                            ),
+                                            startY = 300f, // inizio fade
+                                            endY = Float.POSITIVE_INFINITY
+                                        )
+                                    )
+                            )
+
+
+
+
+
+
+
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         MovieDetailsContent(movieDetails!!)
+
+                        lastReview?.let { review ->
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {  },
+                                        //onLongClick = { ... }
+                                    )
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFFCA024), shape = RoundedCornerShape(12.dp))
+                                    .combinedClickable(
+                                        onClick = { /* normale click */ },
+                                        onLongClick = {
+                                            val intent = Intent(context, EditReviewActivity::class.java).apply {
+                                                putExtra("REVIEW_ID", review.id)
+                                            }
+                                            context.startActivity(intent)
+                                        }
+                                    )
+                                    .padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Valutazione: ${review.rating}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = "Prima visualizzazione: ${review.firstViewed ?: "N/D"}",
+                                    fontSize = 14.sp
+                                )
+                                if (!review.comment.isNullOrBlank()) {
+                                    Text(
+                                        text = "Commento: ${review.comment}",
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Start
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -213,7 +610,6 @@ fun MovieDetailsScreen(
                     CoroutineScope(Dispatchers.IO).launch {
                         val exists = reviewRepository.existsByTitle(details.Title ?: "")
                         if (exists) {
-                            // Film già presente
                             CoroutineScope(Dispatchers.Main).launch {
                                 Toast.makeText(
                                     context,
@@ -240,10 +636,13 @@ fun MovieDetailsScreen(
                 }
             },
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .size(100.dp),
-            shape = MaterialTheme.shapes.medium
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .size(75.dp),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
         ) {
             Icon(
                 imageVector = Icons.Filled.Favorite,
@@ -251,58 +650,15 @@ fun MovieDetailsScreen(
                 tint = MaterialTheme.colorScheme.onPrimary
             )
         }
-
-
-        /*bottone vecchio
-
-        Button(
-            onClick = {
-                movieDetails?.let { details ->
-                    val review = Review(
-                        title = details.Title ?: "Titolo sconosciuto",
-                        rating = 0f // valore placeholder, da aggiornare se serve
-                    )
-                    // Inserimento nel DB usando coroutine
-                    CoroutineScope(Dispatchers.IO).launch {
-                        reviewRepository.insert(review)
-                    }
-
-                    Toast.makeText(context, "Film aggiunto ai preferiti", Toast.LENGTH_SHORT).show()
-                }
-                //context.startActivity(intent)
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .size(100.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Favorite, // Cuore pieno
-                contentDescription = "Aggiungi ai preferiti",
-                tint = MaterialTheme.colorScheme.onPrimary // colore dell'icona
-            )
-        }
-
     }
-}
-*/
+}*/
 
-    }
-}
 @Composable
 fun MovieDetailsContent(details: OmdbMovieDetails) {
-    Column {
-        Text(
-            text = details.Title ?: "Titolo non disponibile",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Column(modifier = Modifier.padding(16.dp)) {
 
-        DetailRow("Anno", details.Year)
         DetailRow("Durata", details.Runtime)
-        DetailRow("Genere", details.Genre)
+
         DetailRow("Regista", details.Director)
         DetailRow("Attori", details.Actors)
         DetailRow("Trama", details.Plot)
@@ -332,3 +688,4 @@ fun DetailRow(label: String, value: String?) {
         }
     }
 }
+

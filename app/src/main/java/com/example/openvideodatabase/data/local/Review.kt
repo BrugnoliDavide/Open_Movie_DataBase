@@ -11,7 +11,7 @@ data class Review(
     val id: Long = 0L,
 
     @ColumnInfo(name = "external_id")
-    val externalId: String?,
+    val externalId: String,
 
     @ColumnInfo(name = "title")
     val title: String,

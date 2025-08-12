@@ -35,6 +35,11 @@
 
         <activity android:name=".LikeFilmActivity" />
 
+        <activity
+            android:name=".EditReviewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OpenVideoDatabase" />
+
 
         <activity
             android:name=".MainActivity"

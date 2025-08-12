@@ -12,8 +12,8 @@ import javax.inject.Singleton
 class ReviewRepository @Inject constructor(
     private val dao: ReviewDao
 ) {
-    fun getAll(): Flow<List<Review>> = dao.getAll()
-    fun getById(id: Long): Flow<Review?> = dao.getById(id)
+    //fun getAll(): Flow<List<Review>> = dao.getAll()
+    //fun getById(id: Long): Flow<Review?> = dao.getById(id)
 
     suspend fun insert(review: Review): Long = dao.insert(review)
 
@@ -23,12 +23,20 @@ class ReviewRepository @Inject constructor(
 
     suspend fun update(review: Review) = dao.update(review)
     suspend fun delete(review: Review) = dao.delete(review)
+    suspend fun getLastReviewByTitle(title: String): Review? {
+        return dao.getLastReviewByTitle(title)
+    }
 
-    // utility per registrare la prima visualizzazione
+
+
     suspend fun markFirstViewedIfNull(id: Long, time: Date) = dao.markFirstViewedIfNull(id, time)
 
     suspend fun getAllReviews(): List<Review> {
         return dao.getAllReviews()
+    }
+        suspend fun getReviewById(id: Long): Review? {
+            return dao.getReviewById(id)
+
     }
 
 }

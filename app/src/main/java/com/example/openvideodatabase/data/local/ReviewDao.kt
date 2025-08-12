@@ -28,6 +28,12 @@ interface ReviewDao {
     @Query("SELECT COUNT(*) FROM reviews WHERE title = :title")
     suspend fun countByTitle(title: String): Int
 
+    @Query("SELECT * FROM reviews WHERE title = :title ORDER BY id DESC LIMIT 1")
+    suspend fun getLastReviewByTitle(title: String): Review?
+
+    @Query("SELECT * FROM reviews WHERE id = :id")
+    suspend fun getReviewById(id: Long): Review?
+
 
     // Imposta first_viewed soltanto se è null (prima visualizzazione)
     @Query("UPDATE reviews SET first_viewed = :firstViewed WHERE id = :id AND first_viewed IS NULL")

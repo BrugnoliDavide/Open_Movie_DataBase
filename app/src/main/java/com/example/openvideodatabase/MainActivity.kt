@@ -60,7 +60,6 @@ fun Login(name: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
 
-    //facciamo in modo di centrare la schermata di benvenuto
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,9 +72,8 @@ fun Login(name: String, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
-        //si mostra un campo compilabile dove va il nome
         TextField(
-            value = username, //si relaziona il campo compilabile ad una varibile username
+            value = username,
             onValueChange = { newText -> username = newText },
             label = { Text("inserisci il tuo nome") },
             singleLine = true,
@@ -94,7 +92,6 @@ fun Login(name: String, modifier: Modifier = Modifier) {
                         putExtra("username", username)
                     }
                     context.startActivity(intent)
-                    //(context as Activity).finish()
 
                     (context as? Activity)?.overridePendingTransition(
                         android.R.anim.fade_in,
