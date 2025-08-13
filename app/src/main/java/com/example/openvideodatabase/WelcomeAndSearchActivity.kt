@@ -260,7 +260,7 @@ fun WelcomeSearchScreen(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Cerca",
-                        tint = Color.Blue
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 },
                 label = { Text("Cerca", fontWeight = FontWeight.Bold) }

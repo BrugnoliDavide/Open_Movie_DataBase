@@ -60,7 +60,9 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 //import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
-
+//necessarie per bottone dinamico
+import kotlinx.coroutines.flow.flowOf
+import androidx.compose.runtime.collectAsState
 
 
 class ShowDettailActivity : ComponentActivity() {
@@ -124,10 +126,22 @@ fun MovieDetailsScreen(
     reviewRepository: ReviewRepository
 ) {
     var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
-    var lastReview by remember { mutableStateOf<Review?>(null) }
+    //var lastReview by remember { mutableStateOf<Review?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+
+    val reviewsFlow = remember(movieDetails) {
+        movieDetails?.Title?.let { title ->
+            reviewRepository.getReviewsByTitleFlow(title)
+        } ?: flowOf(emptyList())
+    }
+
+    val reviews by reviewsFlow.collectAsState(initial = emptyList())
+    val lastReview = reviews.firstOrNull()
+
+
+
 
     LaunchedEffect(imdbID) {
         if (omdbApi != null && imdbID.isNotEmpty()) {
@@ -175,13 +189,14 @@ fun MovieDetailsScreen(
         }
     }
 
+    /*
     LaunchedEffect(movieDetails) {
         movieDetails?.let { details ->
             if (!details.Title.isNullOrBlank()) {
                 lastReview = reviewRepository.getLastReviewByTitle(details.Title)
             }
         }
-    }
+    }*/
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -253,7 +268,7 @@ fun MovieDetailsScreen(
                                 )
                         )
 
-                        // Titolo e dettagli principali sopra l'immagine
+
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
@@ -288,7 +303,7 @@ fun MovieDetailsScreen(
                         Column(
                             modifier = Modifier.padding(30.dp)
                                 .fillMaxWidth()
-                                .background(Color(0xFFFCA024), shape = RoundedCornerShape(24.dp))
+                                .background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(24.dp))
                                 .combinedClickable(
                                     onClick = { },
                                     onLongClick = {
@@ -303,17 +318,20 @@ fun MovieDetailsScreen(
                             Text(
                                 text = "Valutazione: ${review.rating}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.inverseOnSurface
                             )
                             Text(
                                 text = "Prima visualizzazione: ${review.firstViewed ?: "N/D"}",
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.inverseOnSurface
                             )
                             if (!review.comment.isNullOrBlank()) {
                                 Text(
                                     text = "Commento: ${review.comment}",
                                     fontSize = 14.sp,
-                                    textAlign = TextAlign.Start
+                                    textAlign = TextAlign.Start,
+                                    color = MaterialTheme.colorScheme.inverseOnSurface
                                 )
                             }
                         }
@@ -345,8 +363,11 @@ fun MovieDetailsScreen(
                 movieDetails?.let { details ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val exists = reviewRepository.existsByTitle(details.Title ?: "")
+                        val existingReview = reviewRepository.getLastReviewByTitle(details.Title ?: "")
+
                         if (exists) {
                             CoroutineScope(Dispatchers.Main).launch {
+
                                 Toast.makeText(
                                     context,
                                     "Film già aggiunto ai preferiti",

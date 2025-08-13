@@ -28,6 +28,9 @@ interface ReviewDao {
     @Query("SELECT COUNT(*) FROM reviews WHERE title = :title")
     suspend fun countByTitle(title: String): Int
 
+    @Query("SELECT * FROM reviews WHERE title = :title ORDER BY id DESC")
+    fun getReviewsByTitleFlow(title: String): Flow<List<Review>>
+
     @Query("SELECT * FROM reviews WHERE title = :title ORDER BY id DESC LIMIT 1")
     suspend fun getLastReviewByTitle(title: String): Review?
 

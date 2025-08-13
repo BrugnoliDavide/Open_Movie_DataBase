@@ -29,6 +29,7 @@ class ReviewRepository @Inject constructor(
 
 
 
+
     suspend fun markFirstViewedIfNull(id: Long, time: Date) = dao.markFirstViewedIfNull(id, time)
 
     suspend fun getAllReviews(): List<Review> {
@@ -38,5 +39,9 @@ class ReviewRepository @Inject constructor(
             return dao.getReviewById(id)
 
     }
+
+    fun getReviewsByTitleFlow(title: String): Flow<List<Review>> {
+        return dao.getReviewsByTitleFlow(title)}
+
 
 }
