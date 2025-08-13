@@ -43,6 +43,20 @@ import android.widget.Toast
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
+//barra di navigazione
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.core.app.ActivityOptionsCompat
+import androidx.compose.animation.*
+import androidx.compose.runtime.*
+import androidx.navigation.compose.*
+import android.app.Activity
+
 
 
 
@@ -175,16 +189,18 @@ fun WelcomeSearchScreen(
         retrofitStatus = omdbApi != null
     }
 
+
     // Timer per passare dalla schermata welcome alla ricerca
     LaunchedEffect(showWelcome) {
         if (showWelcome) {
-            delay(2000)
+            delay(1)
             // Controlla se siamo ancora nella schermata di benvenuto
             if (showWelcome) {
                 showWelcome = false
             }
         }
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -217,7 +233,9 @@ fun WelcomeSearchScreen(
                 )
             }
         }
-        Button(
+
+        //vecchio bottone per passare a LikeFilmActivity
+        /*Button(
             onClick = {
                 val intent = Intent(context, LikeFilmActivity::class.java)
                 context.startActivity(intent)
@@ -228,12 +246,61 @@ fun WelcomeSearchScreen(
                 .size(width = 140.dp, height = 44.dp),
         ) {
             Text(text = "LIKE FILM")
+        }*/
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            NavigationBarItem(
+                selected = true,
+                onClick = {
+
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Cerca",
+                        tint = Color.Blue
+                    )
+                },
+                label = { Text("Cerca", fontWeight = FontWeight.Bold) }
+            )
+
+            NavigationBarItem(
+                selected = false,
+                onClick = {
+                        val intent = Intent(context, LikeFilmActivity::class.java)
+                        context.startActivity(intent)
+                    val activity = context as? Activity
+                    if (activity != null) {
+                        val options = ActivityOptionsCompat.makeCustomAnimation(
+                            activity,
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                        )
+                        activity.startActivity(intent, options.toBundle())
+                    } else {
+                        // fallback generico se context non è Activity
+                        context.startActivity(intent)
+                    }
+
+
+
+
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Preferiti",
+                        tint = MaterialTheme.colorScheme.onSurface
+
+                    )
+                },
+                label = { Text("Preferiti", fontWeight = FontWeight.Normal) }
+            )
         }
     }
 }
-
-
-
 
 
 @Composable

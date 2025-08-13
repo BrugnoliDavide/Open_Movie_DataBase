@@ -62,6 +62,7 @@ import coil.compose.AsyncImage
 
 
 
+
 class ShowDettailActivity : ComponentActivity() {
 
     private var omdbApi: ApiOmdb? = null

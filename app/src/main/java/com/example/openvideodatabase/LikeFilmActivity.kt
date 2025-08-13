@@ -22,6 +22,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.example.openvideodatabase.data.ReviewRepository
 import com.example.openvideodatabase.data.local.AppDatabase
@@ -29,6 +31,16 @@ import com.example.openvideodatabase.data.local.Review
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+
+//barra di navigazione
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import android.app.Activity
+import androidx.core.app.ActivityOptionsCompat
 
 
 class LikeFilmActivity : ComponentActivity() {
@@ -81,6 +93,50 @@ fun FavoritesScreen(reviewRepository: ReviewRepository, onBack: () -> Unit) {
                     }
                 }
             )
+        },bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface
+            ) {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = {
+                        val intent = Intent(context, WelcomeAndSearchActivity::class.java)
+
+                        val activity = context as? Activity
+                        if (activity != null) {
+                            val options = ActivityOptionsCompat.makeCustomAnimation(
+                                activity,
+                                android.R.anim.fade_in,
+                                android.R.anim.fade_out
+                            )
+                            context.startActivity(intent, options.toBundle())
+                        } else {
+                            context.startActivity(intent)
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Cerca",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    label = { Text("Cerca", fontWeight = FontWeight.Normal) }
+                )
+
+                NavigationBarItem(
+                    selected = true, // Mostra come selezionato
+                    onClick = { /* Nessuna azione */ },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Preferiti",
+                            tint = Color.Red
+                        )
+                    },
+                    label = { Text("Preferiti", fontWeight = FontWeight.Bold) }
+                )
+            }
         }
     ) { paddingValues ->
         Column(modifier = Modifier
@@ -247,6 +303,9 @@ fun FavoriteItem(
                 }
             )
         }
+
+
+
     }
 
     if (showRatingDialog) {
@@ -347,5 +406,6 @@ fun FavoriteItem(
         )
     }
 }
+
 
 
