@@ -4,10 +4,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
+
+import androidx.activity.OnBackPressedCallback
 
 import android.content.Intent
 import android.os.Bundle
@@ -22,8 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.example.openvideodatabase.data.ReviewRepository
 import com.example.openvideodatabase.data.local.AppDatabase
@@ -36,7 +34,6 @@ import kotlinx.coroutines.withContext
 //barra di navigazione
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import android.app.Activity
@@ -50,6 +47,18 @@ class LikeFilmActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@LikeFilmActivity, WelcomeAndSearchActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                finish()
+            }
+        })
+
+
+
 
         // Inizializzo il repository
         val db = AppDatabase.getInstance(applicationContext)
@@ -244,6 +253,7 @@ class LikeFilmActivity : ComponentActivity() {
         }
     }
 
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun FavoriteItem(
@@ -349,9 +359,14 @@ class LikeFilmActivity : ComponentActivity() {
                         value = ratingInput,
                         onValueChange = { newValue ->
                             if (newValue.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                                ratingInput = newValue
+                                val value = newValue.toFloatOrNull()
+                                if (value == null || (value in 0f..10f)) {
+                                    ratingInput = newValue
+                                }
                             }
+
                         },
+
                         label = { Text("Valutazione (0-10)") },
                         /*colors = TextFieldDefaults.textFieldColors(
                         textColor = MaterialTheme.colorScheme.onSurface,

@@ -1,5 +1,9 @@
 package com.example.openvideodatabase
 
+
+
+import androidx.activity.OnBackPressedCallback
+
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -52,9 +56,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.core.app.ActivityOptionsCompat
-import androidx.compose.animation.*
-import androidx.compose.runtime.*
-import androidx.navigation.compose.*
 import android.app.Activity
 
 
@@ -63,6 +64,9 @@ import android.app.Activity
 class WelcomeAndSearchActivity : ComponentActivity() {
     private var omdbApi: ApiOmdb? = null
     private val apiKey = "e68682b3"
+
+    private var backPressedTime: Long = 0
+    private val backPressInterval: Long = 2000
 
     companion object {
         private const val TAG = "WelcomeSearchActivity"
@@ -73,6 +77,24 @@ class WelcomeAndSearchActivity : ComponentActivity() {
         Log.d(TAG, "Activity creata")
 
         val username = intent.getStringExtra("username") ?: "Utente"
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val currentTime = System.currentTimeMillis()
+
+                if (currentTime - backPressedTime < backPressInterval) {
+                    finishAffinity() // Chiude l'app
+                } else {
+                    Toast.makeText(
+                        this@WelcomeAndSearchActivity,
+                        "Premere di nuovo per uscire",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    backPressedTime = currentTime
+                }
+            }
+        })
+
 
         setupRetrofit()
 
@@ -176,6 +198,7 @@ fun WelcomeSearchScreen(
     username: String,
     omdbApi: ApiOmdb?,
     onSearchMovie: (String, (String?) -> Unit) -> Unit,
+    //provare a rimuovere
     apiKey: String
 ) {
     var showWelcome by remember { mutableStateOf(true) }

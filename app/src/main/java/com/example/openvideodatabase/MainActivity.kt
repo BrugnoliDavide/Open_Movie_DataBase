@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
@@ -17,32 +15,11 @@ import androidx.compose.runtime.LaunchedEffect
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 import kotlinx.coroutines.delay
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Box
-
-
-
-/*
-@Composable
-fun WelcomeScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize(), // occuperà tutta la pagina
-        contentAlignment = Alignment.Center // centra il contenuto sia verticalmente che orizzontalmente
-    ) {
-        Text(
-            text = "BENVENUTO",
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Thin,
-            fontSize = 36.sp // aumenta la dimensione del testo
-        )
-    }
-}*/
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
