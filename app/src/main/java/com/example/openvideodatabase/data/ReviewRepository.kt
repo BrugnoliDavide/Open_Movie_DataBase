@@ -3,7 +3,6 @@ package com.example.openvideodatabase.data
 import com.example.openvideodatabase.data.local.Review
 import com.example.openvideodatabase.data.local.ReviewDao
 import kotlinx.coroutines.flow.Flow
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,14 +22,7 @@ class ReviewRepository @Inject constructor(
 
     suspend fun update(review: Review) = dao.update(review)
     suspend fun delete(review: Review) = dao.delete(review)
-    suspend fun getLastReviewByTitle(title: String): Review? {
-        return dao.getLastReviewByTitle(title)
-    }
 
-
-
-
-    suspend fun markFirstViewedIfNull(id: Long, time: Date) = dao.markFirstViewedIfNull(id, time)
 
     suspend fun getAllReviews(): List<Review> {
         return dao.getAllReviews()

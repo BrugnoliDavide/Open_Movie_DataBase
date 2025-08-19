@@ -3,8 +3,6 @@ package com.example.openvideodatabase
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
-//import com.example.openvideodatabase.OmdbSearchResponse
-//import OmdbSearchResponse
 
 interface ApiOmdb {
     @GET("/")
@@ -13,11 +11,9 @@ interface ApiOmdb {
         @Query("apikey") apiKey: String
     ): Call<OmdbSearchResponse>
 
-
     @GET("/")
     fun getMovieDetails(
         @Query("i") imdbId: String,
         @Query("apikey") apiKey: String
     ): Call<OmdbMovieDetails>
-
 }

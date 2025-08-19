@@ -185,15 +185,6 @@ fun MovieDetailsScreen(
         }
     }
 
-    /*
-    LaunchedEffect(movieDetails) {
-        movieDetails?.let { details ->
-            if (!details.Title.isNullOrBlank()) {
-                lastReview = reviewRepository.getLastReviewByTitle(details.Title)
-            }
-        }
-    }*/
-
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             isLoading -> {
@@ -359,7 +350,7 @@ fun MovieDetailsScreen(
                 movieDetails?.let { details ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val exists = reviewRepository.existsByTitle(details.Title ?: "")
-                        val existingReview = reviewRepository.getLastReviewByTitle(details.Title ?: "")
+                        //val existingReview = reviewRepository.getLastReviewByTitle(details.Title ?: "")
 
                         if (exists) {
                             CoroutineScope(Dispatchers.Main).launch {

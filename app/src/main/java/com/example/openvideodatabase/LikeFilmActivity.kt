@@ -1,52 +1,71 @@
 package com.example.openvideodatabase
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.*
+//barra di navigazione
 
-import androidx.activity.OnBackPressedCallback
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityOptionsCompat
 import com.example.openvideodatabase.data.ReviewRepository
 import com.example.openvideodatabase.data.local.AppDatabase
 import com.example.openvideodatabase.data.local.Review
+import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-
-//barra di navigazione
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import android.app.Activity
-import androidx.core.app.ActivityOptionsCompat
-import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
-
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 class LikeFilmActivity : ComponentActivity() {
 
     private lateinit var reviewRepository: ReviewRepository
 
+    private var omdbApi: ApiOmdb? = null
+    private val apiKey = "e68682b3"
+
+
+    private fun setupRetrofit() {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://www.omdbapi.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        omdbApi = retrofit.create(ApiOmdb::class.java)
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -58,7 +77,7 @@ class LikeFilmActivity : ComponentActivity() {
         })
 
 
-
+        setupRetrofit()
 
         // Inizializzo il repository
         val db = AppDatabase.getInstance(applicationContext)
@@ -147,7 +166,7 @@ class LikeFilmActivity : ComponentActivity() {
                                 tint = Color.Red
                             )
                         },
-                        label = { Text("Preferiti", fontWeight = FontWeight.Bold) }
+                        label = { Text("Preferiti", fontWeight = FontWeight.ExtraBold) }
                     )
                 }
             }
@@ -245,8 +264,9 @@ class LikeFilmActivity : ComponentActivity() {
                                     }
 
                                 }
-                            }
-                        )
+                            },
+                            omdbApi = omdbApi,
+                            apiKey = apiKey)
                     }
                 }
             }
@@ -261,11 +281,12 @@ class LikeFilmActivity : ComponentActivity() {
         onShowDetails: (String) -> Unit,
         onDelete: (Review) -> Unit,
         onRate: (Review, Float) -> Unit,
-        onSetFirstViewed: (Review, Date) -> Unit
+        onSetFirstViewed: (Review, Date) -> Unit,
+        omdbApi: ApiOmdb?,
+        apiKey: String
     ) {
-        val context = LocalContext.current
         var expanded by remember { mutableStateOf(false) }
-
+        var posterUrl by remember { mutableStateOf<String?>(null) }
         // Stato per mostrare dialogo di inserimento valutazione
         var showRatingDialog by remember { mutableStateOf(false) }
         var ratingInput by remember { mutableStateOf("") }
@@ -275,6 +296,23 @@ class LikeFilmActivity : ComponentActivity() {
         var dateInput by remember { mutableStateOf("") }
 
         val dateFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
+
+        LaunchedEffect(review.externalId) {
+            if (omdbApi != null) {
+                try {
+                    val response = withContext(Dispatchers.IO) {
+                        omdbApi.getMovieDetails(review.externalId, apiKey).execute()
+                    }
+                    if (response.isSuccessful) {
+                        posterUrl = response.body()?.Poster
+                    }
+                } catch (e: Exception) {
+                    posterUrl = null
+                }
+            }
+        }
+
+
 
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -290,7 +328,19 @@ class LikeFilmActivity : ComponentActivity() {
                 elevation = CardDefaults.cardElevation(4.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Row(modifier = Modifier.padding(12.dp)) {
+                    if (!posterUrl.isNullOrEmpty() && posterUrl != "N/A") {
+                        AsyncImage(
+                            model = posterUrl,
+                            contentDescription = "Poster",
+                            modifier = Modifier
+                                .size(60.dp)
+                                .padding(end = 12.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = review.title,
                         style = MaterialTheme.typography.titleMedium,
@@ -452,6 +502,7 @@ class LikeFilmActivity : ComponentActivity() {
             )
         }
     }
+}
 }
 
 
