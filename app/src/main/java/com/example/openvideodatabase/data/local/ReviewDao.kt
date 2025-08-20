@@ -6,6 +6,24 @@ import java.util.Date
 
 @Dao
 interface ReviewDao {
+    @Query("SELECT * FROM reviews ORDER BY title ASC")
+    suspend fun getAllReviewsByTitleAsc(): List<Review>
+
+    @Query("SELECT * FROM reviews ORDER BY title DESC")
+    suspend fun getAllReviewsByTitleDesc(): List<Review>
+
+    @Query("SELECT * FROM reviews ORDER BY rating ASC")
+    suspend fun getAllReviewsByRatingAsc(): List<Review>
+
+    @Query("SELECT * FROM reviews ORDER BY rating DESC")
+    suspend fun getAllReviewsByRatingDesc(): List<Review>
+
+    @Query("SELECT * FROM reviews ORDER BY first_viewed ASC")
+    suspend fun getAllReviewsByFirstViewedAsc(): List<Review>
+
+    @Query("SELECT * FROM reviews ORDER BY first_viewed DESC")
+    suspend fun getAllReviewsByFirstViewedDesc(): List<Review>
+
 
     @Query("SELECT * FROM reviews ORDER BY first_viewed DESC")
     fun getAll(): Flow<List<Review>>
@@ -13,7 +31,7 @@ interface ReviewDao {
     @Query("SELECT * FROM reviews WHERE id = :id")
     fun getById(id: Long): Flow<Review?>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(review: Review): Long
 
     @Update
@@ -37,8 +55,13 @@ interface ReviewDao {
     @Query("SELECT * FROM reviews WHERE id = :id")
     suspend fun getReviewById(id: Long): Review?
 
+    @Query("SELECT COUNT(*) FROM reviews WHERE external_id = :externalId")
+    suspend fun countByExternalId(externalId: String): Int
 
-    // Imposta first_viewed soltanto se è null (prima visualizzazione)
+    @Query("SELECT * FROM reviews WHERE external_id = :externalId LIMIT 1")
+    suspend fun getByExternalId(externalId: String): Review?
+
+
     @Query("UPDATE reviews SET first_viewed = :firstViewed WHERE id = :id AND first_viewed IS NULL")
     suspend fun markFirstViewedIfNull(id: Long, firstViewed: Date)
 }

@@ -1,9 +1,6 @@
 package com.example.openvideodatabase
 
-
-
 import androidx.activity.OnBackPressedCallback
-
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -48,18 +45,18 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.openvideodatabase.ui.theme.OpenVideoDatabaseTheme
 //barra di navigazione
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
-import androidx.compose.material.icons.Icons
 import androidx.core.app.ActivityOptionsCompat
 import android.app.Activity
-
-
-
+//bottone guarda più tardi
+import androidx.compose.material3.IconButton
 
 class WelcomeAndSearchActivity : ComponentActivity() {
     private var omdbApi: ApiOmdb? = null
@@ -95,7 +92,6 @@ class WelcomeAndSearchActivity : ComponentActivity() {
             }
         })
 
-
         setupRetrofit()
 
         setContent {
@@ -105,7 +101,8 @@ class WelcomeAndSearchActivity : ComponentActivity() {
                         username = username,
                         omdbApi = omdbApi,
                         onSearchMovie = ::searchMovie,
-                        apiKey = apiKey
+                        apiKey = apiKey,
+                        fromOtherActivity = intent.getBooleanExtra("from_other_activity", false)
                     )
                 }
             }
@@ -199,9 +196,10 @@ fun WelcomeSearchScreen(
     omdbApi: ApiOmdb?,
     onSearchMovie: (String, (String?) -> Unit) -> Unit,
     //provare a rimuovere
-    apiKey: String
+    apiKey: String,
+    fromOtherActivity: Boolean = false
 ) {
-    var showWelcome by remember { mutableStateOf(true) }
+    var showWelcome by remember { mutableStateOf(!fromOtherActivity) }
     var searchTitle by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
     var retrofitStatus by remember { mutableStateOf(omdbApi != null) }
@@ -211,7 +209,6 @@ fun WelcomeSearchScreen(
     LaunchedEffect(omdbApi) {
         retrofitStatus = omdbApi != null
     }
-
 
     // Timer per passare dalla schermata welcome alla ricerca
     LaunchedEffect(showWelcome) {
@@ -257,33 +254,51 @@ fun WelcomeSearchScreen(
             }
         }
 
-        //vecchio bottone per passare a LikeFilmActivity
-        /*Button(
+        // IconButton per "Guarda più tardi" in alto a destra
+        /* deprecato
+        IconButton(
             onClick = {
-                val intent = Intent(context, LikeFilmActivity::class.java)
-                context.startActivity(intent)
+                val intent = Intent(context, WatchLaterActivity::class.java)
+                intent.putExtra("from_other_activity", true)
+                val activity = context as? Activity
+                if (activity != null) {
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        activity,
+                        android.R.anim.fade_in,
+                        android.R.anim.fade_out
+                    )
+                    activity.startActivity(intent, options.toBundle())
+                } else {
+                    context.startActivity(intent)
+                }
             },
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .size(width = 140.dp, height = 44.dp),
+                .align(Alignment.TopEnd)
+                .padding(20.dp)
+                .size(40.dp)
         ) {
-            Text(text = "LIKE FILM")
+            Icon(
+                imageVector = Icons.Default.Schedule,
+                contentDescription = "Watch Later",
+                tint = MaterialTheme.colorScheme.primary
+            )
         }*/
+
+
+
+        // NavigationBar completa con 3 elementi
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             NavigationBarItem(
-                selected = true,
-                onClick = {
-
-                },
+                selected = true, // Schermata corrente
+                onClick = { /* no-op - schermata corrente */ },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Cerca",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = Color(0,106,255)  //MaterialTheme.colorScheme.primary
                     )
                 },
                 label = { Text("Cerca", fontWeight = FontWeight.Bold) }
@@ -292,8 +307,8 @@ fun WelcomeSearchScreen(
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                        val intent = Intent(context, LikeFilmActivity::class.java)
-                        context.startActivity(intent)
+                    val intent = Intent(context, LikeFilmActivity::class.java)
+                    intent.putExtra("from_other_activity", true)
                     val activity = context as? Activity
                     if (activity != null) {
                         val options = ActivityOptionsCompat.makeCustomAnimation(
@@ -303,28 +318,42 @@ fun WelcomeSearchScreen(
                         )
                         activity.startActivity(intent, options.toBundle())
                     } else {
-                        // fallback generico se context non è Activity
                         context.startActivity(intent)
                     }
-
-
-
-
                 },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Favorite,
                         contentDescription = "Preferiti",
                         tint = MaterialTheme.colorScheme.onSurface
-
                     )
                 },
                 label = { Text("Preferiti", fontWeight = FontWeight.Normal) }
             )
+
+            NavigationBarItem(
+                selected = false,
+                onClick = {
+                    val intent = Intent(context, WatchLaterActivity::class.java)
+                    intent.putExtra("from_other_activity", true)
+                    val activity = context as? Activity
+                    if (activity != null) {
+                        val options = ActivityOptionsCompat.makeCustomAnimation(
+                            activity,
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                        )
+                        activity.startActivity(intent, options.toBundle())
+                    } else {
+                        context.startActivity(intent)
+                    }
+                },
+                icon = { Icon(Icons.Default.Schedule, contentDescription = "Guarda più tardi") },
+                label = { Text("Guarda più tardi", fontWeight = FontWeight.Normal) }
+            )
         }
     }
 }
-
 
 @Composable
 fun StatusIndicator(retrofitStatus: Boolean) {
@@ -356,7 +385,7 @@ fun WelcomeScreen(username: String) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            //CircularProgressIndicator()
+
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = "Caricamento...", fontSize = 16.sp)
         }

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.combinedClickable
 import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.icons.filled.Schedule
 
 
 //per sfondo
@@ -59,14 +60,18 @@ import coil.compose.AsyncImage
 //necessarie per bottone dinamico
 import kotlinx.coroutines.flow.flowOf
 import androidx.compose.runtime.collectAsState
-
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.withContext
+import com.example.openvideodatabase.data.local.WatchLaterMovie
+import com.example.openvideodatabase.data.WatchLaterRepo
 
 class ShowDettailActivity : ComponentActivity() {
 
     private var omdbApi: ApiOmdb? = null
     private val apiKey = "e68682b3"
     private lateinit var reviewRepository: ReviewRepository
-
+    private lateinit var watchLaterRepo: WatchLaterRepo
 
     companion object {
         private const val TAG = "ShowDettailActivity"
@@ -77,10 +82,10 @@ class ShowDettailActivity : ComponentActivity() {
 
         val db = AppDatabase.getInstance(applicationContext)
         reviewRepository = ReviewRepository(db.reviewDao())
+        watchLaterRepo = WatchLaterRepo(db.watchLaterDao())
 
         val imdbID = intent.getStringExtra("imdbID") ?: ""
         Log.d(TAG, "IMDb ID ricevuto: $imdbID")
-
 
         setupRetrofit()
 
@@ -91,7 +96,8 @@ class ShowDettailActivity : ComponentActivity() {
                         imdbID = imdbID,
                         omdbApi = omdbApi,
                         apiKey = apiKey,
-                        reviewRepository = reviewRepository
+                        reviewRepository = reviewRepository,
+                        watchLaterRepo = watchLaterRepo
                     )
                 }
             }
@@ -119,12 +125,13 @@ fun MovieDetailsScreen(
     imdbID: String,
     omdbApi: ApiOmdb?,
     apiKey: String,
-    reviewRepository: ReviewRepository
+    reviewRepository: ReviewRepository,
+    watchLaterRepo: WatchLaterRepo
 ) {
     var movieDetails by remember { mutableStateOf<OmdbMovieDetails?>(null) }
-    //var lastReview by remember { mutableStateOf<Review?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isInWatchLater by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val reviewsFlow = remember(movieDetails) {
@@ -136,8 +143,15 @@ fun MovieDetailsScreen(
     val reviews by reviewsFlow.collectAsState(initial = emptyList())
     val lastReview = reviews.firstOrNull()
 
-
-
+    // Controlla se il film è già in "Guarda più tardi"
+    LaunchedEffect(movieDetails) {
+        movieDetails?.let { details ->
+            withContext(Dispatchers.IO) {
+                val allMovies = watchLaterRepo.getAllMovies()
+                isInWatchLater = allMovies.any { it.externalId == details.imdbID }
+            }
+        }
+    }
 
     LaunchedEffect(imdbID) {
         if (omdbApi != null && imdbID.isNotEmpty()) {
@@ -255,33 +269,85 @@ fun MovieDetailsScreen(
                                 )
                         )
 
-
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(16.dp)
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.Bottom
                         ) {
-                            Text(
-                                text = movieDetails?.Title ?: "Titolo non disponibile",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "${movieDetails?.Year ?: ""} • ${movieDetails?.Genre ?: ""}",
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = movieDetails?.Title ?: "Titolo non disponibile",
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${movieDetails?.Year ?: ""} • ${movieDetails?.Genre ?: ""}",
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
 
 
+                            FloatingActionButton(
+                                onClick = {
+                                    movieDetails?.let { details ->
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            if (isInWatchLater) {
 
+                                                val allMovies = watchLaterRepo.getAllMovies()
+                                                val movieToRemove = allMovies.find { it.externalId == details.imdbID }
+                                                movieToRemove?.let { movie ->
+                                                    watchLaterRepo.removeMovie(movie)
+                                                    withContext(Dispatchers.Main) {
+                                                        isInWatchLater = false
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Film rimosso da Guarda più tardi",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            } else {
 
-
-
+                                                val movie = WatchLaterMovie(
+                                                    externalId = details.imdbID ?: "ID sconosciuto",
+                                                    title = details.Title ?: "Titolo sconosciuto",
+                                                    rating = 0.0f
+                                                )
+                                                watchLaterRepo.addMovie(movie)
+                                                withContext(Dispatchers.Main) {
+                                                    isInWatchLater = true
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Film aggiunto a Guarda più tardi",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.size(40.dp),
+                                containerColor = if (isInWatchLater) MaterialTheme.colorScheme.secondary
+                                else MaterialTheme.colorScheme.tertiary,
+                                shape = RoundedCornerShape(8.dp) // Forma quadrata con angoli arrotondati
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = if (isInWatchLater) "Rimuovi da Guarda più tardi"
+                                    else "Aggiungi a Guarda più tardi",
+                                    tint = MaterialTheme.colorScheme.onSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
 
-                    // Dettagli completi sotto
                     Spacer(modifier = Modifier.height(16.dp))
                     MovieDetailsContent(movieDetails!!)
 
@@ -303,7 +369,7 @@ fun MovieDetailsScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "Valutazione: ${review.rating}",
+                                text = "Valutazione: ${String.format("%.1f", review.rating)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.inverseOnSurface
@@ -327,8 +393,7 @@ fun MovieDetailsScreen(
             }
         }
 
-
-
+        // Bottone torna indietro
         IconButton(
             onClick = {
                 (context as? ComponentActivity)?.finish()
@@ -344,17 +409,17 @@ fun MovieDetailsScreen(
                 modifier = Modifier.size(24.dp)
             )
         }
-        // Pulsante preferiti
-        Button(
+
+        // Bottoni in alto a destra
+        // Solo bottone preferiti rotondo
+        FloatingActionButton(
             onClick = {
                 movieDetails?.let { details ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val exists = reviewRepository.existsByTitle(details.Title ?: "")
-                        //val existingReview = reviewRepository.getLastReviewByTitle(details.Title ?: "")
 
                         if (exists) {
-                            CoroutineScope(Dispatchers.Main).launch {
-
+                            withContext(Dispatchers.Main) {
                                 Toast.makeText(
                                     context,
                                     "Film già aggiunto ai preferiti",
@@ -368,7 +433,7 @@ fun MovieDetailsScreen(
                                 rating = 0f
                             )
                             reviewRepository.insert(review)
-                            CoroutineScope(Dispatchers.Main).launch {
+                            withContext(Dispatchers.Main) {
                                 Toast.makeText(
                                     context,
                                     "Film aggiunto ai preferiti",
@@ -381,12 +446,10 @@ fun MovieDetailsScreen(
             },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(10.dp)
-                .size(75.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
+                .padding(16.dp)
+                .size(56.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
+            shape = CircleShape // Forma rotonda
         ) {
             Icon(
                 imageVector = Icons.Filled.Favorite,
@@ -399,10 +462,8 @@ fun MovieDetailsScreen(
 
 @Composable
 fun MovieDetailsContent(details: OmdbMovieDetails) {
-        Column(modifier = Modifier.padding(16.dp)) {
-
+    Column(modifier = Modifier.padding(16.dp)) {
         DetailRow("Durata", details.Runtime)
-
         DetailRow("Regista", details.Director)
         DetailRow("Attori", details.Actors)
         DetailRow("Trama", details.Plot)
@@ -432,4 +493,3 @@ fun DetailRow(label: String, value: String?) {
         }
     }
 }
-
