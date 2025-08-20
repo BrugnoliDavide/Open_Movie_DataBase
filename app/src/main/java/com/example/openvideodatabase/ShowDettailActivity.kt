@@ -292,13 +292,13 @@ fun MovieDetailsScreen(
                                 )
                             }
 
-                            // Bottone "Guarda più tardi" quadrato e piccolo
+
                             FloatingActionButton(
                                 onClick = {
                                     movieDetails?.let { details ->
                                         CoroutineScope(Dispatchers.IO).launch {
                                             if (isInWatchLater) {
-                                                // Rimuovi da "Guarda più tardi"
+
                                                 val allMovies = watchLaterRepo.getAllMovies()
                                                 val movieToRemove = allMovies.find { it.externalId == details.imdbID }
                                                 movieToRemove?.let { movie ->
@@ -313,7 +313,7 @@ fun MovieDetailsScreen(
                                                     }
                                                 }
                                             } else {
-                                                // Aggiungi a "Guarda più tardi"
+
                                                 val movie = WatchLaterMovie(
                                                     externalId = details.imdbID ?: "ID sconosciuto",
                                                     title = details.Title ?: "Titolo sconosciuto",

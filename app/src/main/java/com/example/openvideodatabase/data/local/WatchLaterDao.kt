@@ -9,7 +9,17 @@ import androidx.room.Query
 @Dao
 interface WatchLaterDao {
 
-    @Query("SELECT * FROM watch_later ORDER BY id DESC") // usa il nome corretto della tabella
+
+    @Query("SELECT * FROM watch_later ORDER BY title ASC")
+    suspend fun getAllByTitleAsc(): List<WatchLaterMovie>
+
+    @Query("SELECT * FROM watch_later ORDER BY title DESC")
+    suspend fun getAllByTitleDesc(): List<WatchLaterMovie>
+
+    @Query("SELECT * FROM watch_later ORDER BY id ASC")
+    suspend fun getAllINV(): List<WatchLaterMovie>
+
+    @Query("SELECT * FROM watch_later ORDER BY id DESC")
     suspend fun getAll(): List<WatchLaterMovie>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

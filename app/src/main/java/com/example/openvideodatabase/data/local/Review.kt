@@ -4,8 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
+import androidx.room.Index
 
-@Entity(tableName = "reviews")
+@Entity(tableName = "reviews",
+    indices = [Index(value = ["external_id"], unique = true)])
 data class Review(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
