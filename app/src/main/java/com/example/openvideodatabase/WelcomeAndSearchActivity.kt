@@ -3,7 +3,6 @@ package com.example.openvideodatabase
 
 
 import androidx.activity.OnBackPressedCallback
-
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -57,6 +56,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.core.app.ActivityOptionsCompat
 import android.app.Activity
+//bottone guarda più tardi
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.IconButton
 
 
 
@@ -76,7 +78,7 @@ class WelcomeAndSearchActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "Activity creata")
 
-        val username = intent.getStringExtra("username") ?: "Utente"
+        val username = intent.getStringExtra("username") ?: "username"
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -105,7 +107,8 @@ class WelcomeAndSearchActivity : ComponentActivity() {
                         username = username,
                         omdbApi = omdbApi,
                         onSearchMovie = ::searchMovie,
-                        apiKey = apiKey
+                        apiKey = apiKey,
+                        fromOtherActivity = intent.getBooleanExtra("from_other_activity", false)
                     )
                 }
             }
@@ -199,9 +202,10 @@ fun WelcomeSearchScreen(
     omdbApi: ApiOmdb?,
     onSearchMovie: (String, (String?) -> Unit) -> Unit,
     //provare a rimuovere
-    apiKey: String
+    apiKey: String,
+    fromOtherActivity: Boolean = false
 ) {
-    var showWelcome by remember { mutableStateOf(true) }
+    var showWelcome by remember { mutableStateOf(!fromOtherActivity) }
     var searchTitle by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
     var retrofitStatus by remember { mutableStateOf(omdbApi != null) }
@@ -270,6 +274,28 @@ fun WelcomeSearchScreen(
         ) {
             Text(text = "LIKE FILM")
         }*/
+
+        IconButton(
+            onClick = {
+                val intent = Intent(context, WatchLaterActivity::class.java)
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(20.dp)
+                .size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Schedule,
+                contentDescription = "Watch Later",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+
+
+
+
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -292,8 +318,8 @@ fun WelcomeSearchScreen(
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                        val intent = Intent(context, LikeFilmActivity::class.java)
-                        context.startActivity(intent)
+                    val intent = Intent(context, LikeFilmActivity::class.java)
+                    intent.putExtra("from_other_activity", true) // DEVE essere PRIMA di startActivity
                     val activity = context as? Activity
                     if (activity != null) {
                         val options = ActivityOptionsCompat.makeCustomAnimation(
@@ -303,13 +329,8 @@ fun WelcomeSearchScreen(
                         )
                         activity.startActivity(intent, options.toBundle())
                     } else {
-                        // fallback generico se context non è Activity
                         context.startActivity(intent)
                     }
-
-
-
-
                 },
                 icon = {
                     Icon(

@@ -10,9 +10,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/logo_omdb"
+        android:icon="@mipmap/logo_nuovo_omdb2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/logo_omdb"
+        android:roundIcon="@mipmap/logo_nuovo_omdb2_foreground"
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenVideoDatabase">
 
@@ -52,12 +52,5 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
-
-
-
-
     </application>
-
 </manifest>

@@ -80,11 +80,9 @@ fun Login(name: String, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        //inseriamo dello spazio per evitare che gli oggetti si intersichino
         Spacer(modifier = Modifier.height(16.dp))
 
         //bottone per il "login"
-
         Button(
             onClick = {
                 if (username.isNotBlank()) {
